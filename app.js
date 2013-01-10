@@ -6,6 +6,8 @@ var cons = require('consolidate');
 var passport = require('passport'), LocalStrategy = require('passport-local').Strategy;
 var user = require('./user.js');
 var _ = require('underscore');
+var models = require('./models.js');
+
 
 app.configure(function() {
   app.use(express.static('public'));
@@ -21,15 +23,15 @@ app.engine('html', cons.swig);
 app.set('view engine', 'html');
 
 
-
-
-
 swig.init({
     root: './views/',
     allowErrors: true
 });
 
 app.set('views', './views/');
+
+
+
 
 
 passport.use(new LocalStrategy( function(username, password, done) {
@@ -47,14 +49,15 @@ passport.use(new LocalStrategy( function(username, password, done) {
 ));
 		
 passport.serializeUser(function(user, done) {
+  user.save().success(function(){});
   done(null, user.id);
 });
 
 passport.deserializeUser(function(id, done) {
   console.log("deserialize called");
-//  User.findById(id, function(err, user) {
+  User.findById(id, function(err, user) {
     done(null, id);
-  //});
+  });
 });
 
 app.get('/', function(req, res) {
@@ -83,7 +86,7 @@ app.get('/pie.txt', function(req, res){
 });
 
 app.get('/fail', function(req, res){
-  res.send('Password Incorrect');
+  res.send('Login Failed');
 });
 
 app.get('/success', function(req, res){
