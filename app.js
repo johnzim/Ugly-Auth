@@ -4,10 +4,9 @@ var chars = require('./routes/chars');
 var swig = require('swig');
 var cons = require('consolidate');
 var passport = require('passport'), LocalStrategy = require('passport-local').Strategy;
-var user = require('./user.js');
 var _ = require('underscore');
-var models = require('./models.js');
-
+var Sequelize = require('sequelize');
+var passwordHash = require('password-hash');
 
 app.configure(function() {
   app.use(express.static('public'));
@@ -19,71 +18,85 @@ app.configure(function() {
   app.use(app.router);
 });
 
+
+// Set the app to use Swig for its templating. Consolidate.js is a precon
 app.engine('html', cons.swig);
 app.set('view engine', 'html');
-
 
 swig.init({
     root: './views/',
     allowErrors: true
 });
 
+// Our views are stored in ./views
 app.set('views', './views/');
 
+// Create a sequelize instance for the DB.
+db = new Sequelize('authdb', 'admin', 'password', {
+  host: "localhost",
+  port: 8889
+});
 
+// We need the user and Session details here as we current handle Authentication in app.js
+var User = db.import(__dirname + '/models/user.js');
+var Session = db.import(__dirname + "/models/session.js");
 
-
-
+// Passport is our Authentication engine and here's our strategy - a classic username &
+// password system with a salted, hashed pw stored in the db user table row. 
 passport.use(new LocalStrategy( function(username, password, done) {
-     var response = user.findOne({username: username});
-     if (!response) {
-            console.log("incorrect user");
-            return done(null, false, { message: 'Incorrect username.' });
+     var foundUser = User.find({where: {username: username}}).success(function(user) {
+      if (!user.validPassword(password)) {
+          console.log("Incorrect password entered by user");
+          return done(null, false, { message: 'Incorrect password.' });
+        } else {
+          console.log("Successful password validation");
+          return done(null, user);
         }
-     if (!user.validPassword(password)) {
-         console.log("incorrect pass");
-        return done(null, false, { message: 'Incorrect password.' });
-     }
-     return done(null, response);
-    }
-));
+    })
+    })
+);
 		
+// passport leaves session serialization to us to sort out.
 passport.serializeUser(function(user, done) {
-  user.save().success(function(){});
-  done(null, user.id);
+   console.log("serialize called");
+  // user.save().success(function(){});
+  // done(null, user.id);
 });
 
 passport.deserializeUser(function(id, done) {
   console.log("deserialize called");
-  User.findById(id, function(err, user) {
-    done(null, id);
-  });
+  // User.findById(id, function(err, user) {
+  //   done(null, id);
+  // });
 });
+
+
+
 
 app.get('/', function(req, res) {
 	res.render('login_page.html', {})
-	}
-);
+});
 
+app.get('/signup', function(req, res){
+  res.render('signup.html', {});
+});
+
+app.post('/new_user', function(req, res){
+  User.create({username: req.body.username, password: passwordHash.
+    generate(req.body.password)}).success(function(user){
+      console.log(req.body.username);
+      console.log(req.body.password);
+      console.log(passwordHash.generate(req.body.password));
+      res.render('signup_success.html', {});  
+    })
+});
 
 app.post('/login', 
-	passport.authenticate('local', {successRedirect: '/success',
-									failureRedirect: '/fail',
-									failureFlash: false })
+	passport.authenticate('local', {
+    successRedirect: '/success',
+		failureRedirect: '/fail',
+		failureFlash: false })
 ); 
-
-
-app.get('/ello.txt', function(req, res) {
-    var body = 'What the hell';
-    res.setHeader('Content-Type', 'text/plain');
-    res.setHeader('Content-Length', body.length);
-    res.end(body);
-});
-
-
-app.get('/pie.txt', function(req, res){
-  res.send('pie time');
-});
 
 app.get('/fail', function(req, res){
   res.send('Login Failed');

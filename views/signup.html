@@ -1,9 +1,11 @@
 {% extends 'layout.html' %}
 {% block title %}
-Ugly Auth Login
+OpenAssetCloud | Sign Up
 {% endblock %}
 {% block content %}
-<form action="/login" method="post">
+<div><h1>Sign Up for our Inexplicably Free Service!</h1>
+</div>
+<form action="/new_user" method="post">
 	<div>
 		<label>Username:</label>
 		<input type="text" name="username">
@@ -13,7 +15,7 @@ Ugly Auth Login
 		<input type="password" name="password">
 	</div>
 	<div>
-		<input type="submit" value="Log In"/>
+		<input type="submit" value="Sign Up"/>
 	</div>
 </form>
 {% endblock %}
