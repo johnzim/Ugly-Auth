@@ -1,0 +1,30 @@
+/* Welcome to Compass.
+ * In this file you should write your main styles. (or centralize your imports)
+ * Import this file using the following HTML or equivalent:
+ * <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css" /> */
+$default-border-radius: 5px;
+
+@import "compass/reset";
+
+
+#loginbox {
+	@include border-radius();
+	height: 400px;
+	width: 400px;
+	background-color: #bbbbbb;
+	margin-top: 100px;
+	margin-right: auto;
+	margin-left: auto;
+}
+
+#login_form_content {
+	position: relative;
+	top: 20px;
+	height: 360px;
+	width: 360px;
+	background-color: #eeeeee;
+	vertical-align: none;
+	margin-top: 100px; 
+	margin-right: auto;
+	margin-left: auto;
+}
