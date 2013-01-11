@@ -7,14 +7,17 @@ var passport = require('passport'), LocalStrategy = require('passport-local').St
 var _ = require('underscore');
 var Sequelize = require('sequelize');
 var passwordHash = require('password-hash');
+var MySQLSessionStore = require('connect-mysql-session')(express);
 
 app.configure(function() {
   app.use(express.static('public'));
   app.use(express.cookieParser());
   app.use(express.bodyParser());
-  app.use(express.session({ secret: 'batmantv' }));
+  app.use(express.session({ secret: 'batman', store: new MySQLSessionStore('authdb', 'admin', 'password', {
+ })}));
   app.use(passport.initialize());
   app.use(passport.session());
+  app.use(app.router);
   app.use(app.router);
 });
 
@@ -57,17 +60,17 @@ passport.use(new LocalStrategy( function(username, password, done) {
 );
 		
 // passport leaves session serialization to us to sort out.
+// We're using connect-mysql-session with a small modification in place for the test DB
+// needs to be changed for release/cloud test.
 passport.serializeUser(function(user, done) {
-   console.log("serialize called");
-  // user.save().success(function(){});
-  // done(null, user.id);
+  done(null, user.id);
 });
 
 passport.deserializeUser(function(id, done) {
   console.log("deserialize called");
-  // User.findById(id, function(err, user) {
-  //   done(null, id);
-  // });
+  Session.find(id).success(function(session) {
+    done(null, id);
+  });
 });
 
 
